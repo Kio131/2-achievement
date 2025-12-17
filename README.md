@@ -39,9 +39,9 @@ docker compose up --build
 curl -X POST http://127.0.0.1:5000/rvs_web_app \             
   -H "Content-Type: application/json" \
   -d '{"number": 5}'
-   Ответ должен быть следующим
 ```
    Ответ должен быть следующим
+
 ```bash
 {"result":6,"status":"success"}
 ```
