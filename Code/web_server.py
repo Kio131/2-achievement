@@ -1,12 +1,11 @@
-import asyncio
+# web_server.py
 from flask import Flask, request, jsonify
 from database import init_db
 from app_server import process_number
 
 app = Flask(__name__)
 
-# Инициализируем БД (однократно)
-asyncio.run(init_db())
+init_db()
 
 @app.route("/rvs_web_app", methods=["POST"])
 def handle_request():
@@ -14,9 +13,9 @@ def handle_request():
 
     number = int(data["number"])
 
-    result = process_number(number)
+    result, code = process_number(number)
 
-    return jsonify(result[0]), result[1]
+    return jsonify(result), code
     
 
 if __name__ == "__main__":

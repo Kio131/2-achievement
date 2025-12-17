@@ -1,9 +1,9 @@
 # database.py
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import create_engine, Column, Integer
+from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy import Column, Integer, text
 
-DATABASE_URL = "sqlite+aiosqlite:///./numbers.db"
+DATABASE_URL = "sqlite:///./numbers.db"
 
 Base = declarative_base()
 
@@ -12,16 +12,15 @@ class NumberEntry(Base):
     id = Column(Integer, primary_key=True)
     value = Column(Integer, nullable=False)
 
-engine = create_async_engine(DATABASE_URL, echo=False, future=True)
-async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+SessionLocal = sessionmaker(bind=engine)
 
-async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+def init_db():
+    Base.metadata.create_all(bind=engine)
 
-async def check_number(number: int) -> str:
-    async with async_session() as session: 
-        result = await session.execute(
+def check_number(number: int) -> str:
+    with SessionLocal() as session: 
+        result = session.execute(
             text("SELECT value FROM numbers WHERE value IN (:number, :number_minus_1) ORDER BY id DESC LIMIT 2"),
             {"number": number, "number_minus_1": number - 1}
         )
@@ -36,6 +35,7 @@ async def check_number(number: int) -> str:
             return "nothing_found"
 
 async def save_number(number: int):
-    async with async_session() as session:
-        session.add(NumberEntry(value=number))
-        await session.commit()
+    with SessionLocal() as session:
+        entry = NumberEntry(value=number)
+        session.add(entry)
+        session.commit()
